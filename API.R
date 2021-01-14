@@ -92,11 +92,12 @@ API_Sign <- as.character(api_info$API_Sign)
 # type <- "sell"
 # ordertype <- "market"
 # volume <- 0.1
-add_order <- function(url, key, secret, pair, type, ordertype, volume) {
+add_order <- function(url, key, secret, pair, type, price, ordertype, volume,
+                      leverage) {
   
   nonce <- as.character(as.numeric(Sys.time()) * 1000000)
   post_data <- paste0("nonce=", nonce, "&pair=", pair, "&type=", type, "&ordertype=", ordertype,
-                      "&volume=", volume)
+                      "&volume=", volume, "&price=", price, "&leverage=", leverage)
   method_path <- gsub("^.*?kraken.com", "", url)
   sign <- hmac(key =  RCurl::base64Decode(secret, mode = "raw"), 
                object = c(charToRaw(method_path), digest(object = paste0(nonce, 
@@ -241,3 +242,37 @@ SR_lines <- function(dataset, roll, n_sort, Ns){
   return(list(SL = sup_w_mean, RL = rs_w_mean))
   
 }
+
+
+
+# Private API calls ------------------------------------------------------------
+myfun <- function (url, key, secret) {
+  
+  # Nonce and post info
+  nonce <- as.character(as.numeric(Sys.time()) * 1000000)
+  post_data <- paste0("nonce=", nonce)
+  
+  # Strip kraken url
+  method_path <- gsub("^.*?kraken.com", "", url)
+  
+  # Secret APi key 
+  sign <- hmac(key =  RCurl::base64Decode(secret, mode = "raw"), 
+               object = c(charToRaw(method_path), digest(object = paste0(nonce, post_data),
+                                                         algo = "sha256",
+                                                         serialize = FALSE, 
+                                                         raw = TRUE)),
+               algo = "sha512", raw = TRUE)
+  # Header
+  httpheader <- c(`API-Key` = key, `API-Sign` =  RCurl::base64Encode(sign))
+  
+  curl <- RCurl::getCurlHandle(useragent = paste("Rbitcoin", packageVersion("Rbitcoin")))
+  query_result_json <- rawToChar(RCurl::getURLContent(curl = curl, 
+                                                      url = url,
+                                                      binary = TRUE,
+                                                      postfields = post_data, 
+                                                      httpheader = httpheader))
+  query_result <- jsonlite::fromJSON(query_result_json)
+  
+  return(query_result)
+}
+
