@@ -7,19 +7,19 @@ sapply(files.sources, source)
 
 # Params
 pair <- "ETHEUR"
-interval <- 60
+interval <- 15
 
 # Get data
 OHLC <- simple_OHLC(interval, pair)
 
 # Get a first visual with support and reisstance lines
-plot_OHLC(dataset = OHLC, roll = 200, n_sort = 3)
+plot_OHLC(dataset = OHLC, roll = 50, n_sort = 3)
 
 # Trade params
-price <- 700
-tp <- 0.02
-sl <- 0.01
-volume = 0.1
+price <- 969.66
+tp <- 4.91/100
+sl <- 2.74/100
+volume = 0.2
 leverage = 2
 
 # Give API Order to limit buy 
@@ -49,7 +49,7 @@ repeat {
       sell_it <- add_order(url = "https://api.kraken.com/0/private/AddOrder",
                           key = API_Key, secret = API_Sign, pair = pair, type = "sell",
                           ordertype = "market", volume = volume,
-                          leverage = leverage)
+                          leverage = leverage, price = 10000)
       status <- "tp_sold"
       print(status)
     } else if(tail(OHLC$close, 1) < price_sl) {
@@ -57,13 +57,13 @@ repeat {
       sell_it <- add_order(url = "https://api.kraken.com/0/private/AddOrder",
                            key = API_Key, secret = API_Sign, pair = pair, type = "sell",
                            ordertype = "market", volume = volume,
-                           leverage = leverage)
+                           leverage = leverage, price = 10000)
       status <- "sl_sold"
       print(status)
     } else {
       
       status <- "no_action"
-      print(status)
+      print(paste(status, Sys.time()))
     }
   
   if(status %in% c("tp_sold", "sl_sold")){
@@ -73,7 +73,7 @@ repeat {
   
   } else {
     
-    print("Position not yet entered")
+    print(paste("Position not yet entered", Sys.time()))
   }
   Sys.sleep(5)
 }
