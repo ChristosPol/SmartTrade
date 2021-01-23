@@ -26,6 +26,7 @@ suppressMessages(library(plotly))
 suppressMessages(library(Metrics))
 suppressMessages(library(plm))
 suppressMessages(library(randomForest))
+suppressMessages(library(stringr))
 
 # Options
 setDTthreads(1)
@@ -276,3 +277,42 @@ myfun <- function (url, key, secret) {
   return(query_result)
 }
 
+
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+#                                   Trade Balance
+# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # 
+# Inputs -----------------------------------------------------------------------
+# aclass = asset class (optional):  currency (default, always currency)
+# asset = base asset used to determine balance (default = ZUSD)
+
+# Values -----------------------------------------------------------------------
+# eb = equivalent balance (combined bbalancealance of all currencies)
+# tb = trade balance (combined  of all equity currencies)
+# m = margin amount of open positions
+# n = unrealized net profit/loss of open positions
+# c = cost basis of open positions
+# v = current floating valuation of open positions
+# e = equity = trade balance + unrealized net profit/loss
+# mf = free margin = equity - initial margin (maximum margin available to open new positions)
+# ml = margin level = (equity / initial margin) * 100
+# url      <- "https://api.kraken.com/0/private/Balance"
+
+get_balance <- function (url, key, secret) {
+  
+  nonce <- as.character(as.numeric(Sys.time()) * 1000000)
+  post_data <- paste0("nonce=", nonce)
+  method_path <- gsub("^.*?kraken.com", "", url)
+  sign <- hmac(key =  RCurl::base64Decode(secret, mode = "raw"), 
+               object = c(charToRaw(method_path), digest(object = paste0(nonce, 
+                                                                         post_data), algo = "sha256", serialize = FALSE, 
+                                                         raw = TRUE)), algo = "sha512", raw = TRUE)
+  httpheader <- c(`API-Key` = key, `API-Sign` =  RCurl::base64Encode(sign))
+  
+  curl <- RCurl::getCurlHandle(useragent = paste("Rbitcoin", packageVersion("Rbitcoin")))
+  query_result_json <- rawToChar(RCurl::getURLContent(curl = curl, 
+                                                      url = url, binary = TRUE, postfields = post_data, 
+                                                      httpheader = httpheader))
+  query_result <- jsonlite::fromJSON(query_result_json)
+  
+  return(query_result)
+}

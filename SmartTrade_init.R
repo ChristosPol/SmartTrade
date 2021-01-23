@@ -7,7 +7,7 @@ sapply(files.sources, source)
 
 # Params
 pair <- "ETHEUR"
-interval <- 15
+interval <- 1
 
 # Get data
 OHLC <- simple_OHLC(interval, pair)
@@ -16,9 +16,9 @@ OHLC <- simple_OHLC(interval, pair)
 plot_OHLC(dataset = OHLC, roll = 50, n_sort = 3)
 
 # Trade params
-price <- 969.66
-tp <- 4.91/100
-sl <- 2.74/100
+price <- 991
+tp <- 5/100
+sl <- 3/100
 volume = 0.2
 leverage = 2
 
@@ -38,6 +38,12 @@ repeat {
   closed <- myfun(url = "https://api.kraken.com/0/private/ClosedOrders",
                   key = API_Key,
                   secret = API_Sign)
+  
+  if (length(closed$error) > 0){
+    print("API rate limit exceeded")
+  } else {
+    print("API rate limit ok")
+  }
   
   
   if(buy_it$result$txid %in% names(closed$result$closed)) {
@@ -75,5 +81,6 @@ repeat {
     
     print(paste("Position not yet entered", Sys.time()))
   }
-  Sys.sleep(5)
+  Sys.sleep(10)
 }
+
