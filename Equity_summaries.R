@@ -6,6 +6,8 @@ eq <- eq[eq$balance != "balance", ]
 eq$balance <- as.numeric(eq$balance)
 eq$last_price <- as.numeric(eq$last_price)
 eq$date_time <- as.POSIXct(eq$date_time)
+eq$date_time <- as.Date(eq$date_time, format ="%y-%m-%d")
+
 pairs <- unique(eq$pair)
 eq$equity <- eq$balance * eq$last_price
 eq <- subset(eq, eq$equity >= 1)
